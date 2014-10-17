@@ -1,0 +1,71 @@
+\documentclass{article}
+\title{A Monte Carlo analysis of capture-mark-recapture experiment methods}
+\author{Ben Lambert}
+\usepackage{natbib}
+\usepackage{appendix}
+\usepackage{url,times}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{amsmath}
+\usepackage[all]{xy}
+\usepackage{pxfonts}
+\usepackage{colortbl}
+\usepackage{color}
+\usepackage{subfigure}
+\usepackage{gensymb}
+\usepackage{ctable}
+\usepackage{longtable}
+\usepackage{pstricks-add}
+\usepackage{pstricks}
+\usepackage{pst-func}
+\usepackage{pst-math}
+
+
+
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+This document provides an outline of a proposed study of capture-mark-recapture methods which could be performed \textit{in silico}. The text details the aims of the study, as well as discussing the benefits of two different possible implementation methods.
+
+\section{The aim of this study}
+This work aims to help inform strategies for capture-mark-recapture methodologies for estimating mosquito population size, by carrying out a Monte Carlo study of estimators (MLE and Bayesian) on a known \textit{in silico} population of mosquitoes. The work would aim to inform both choice of statistical estimators, as well as guide best practices for mosquito population design in the field.
+
+In particular the study will address the following points:
+
+\begin{itemize}
+\item The effect of location of traps (proximity to breeding and feeding sites for example) on estimates of the population size.
+\item Whether it is better to release marked mosquitoes at a single location or at multiple?
+\item The extent of the improvement in estimates of population sizes from trapping at multiple locations.
+\item Whether it is better to release marked mosquitoes all at once, or over time?
+\item The improvement in estimates of a population size to be gained from:
+\begin{itemize}
+\item A range of trap distances from the point(s) of release, breeding or feeding sites.
+\item A time series opposed to a single observation.
+\item Both distance and time dimensions in observations.
+\end{itemize}
+\item How do ML estimators (for example, Lincoln) perform relative to Bayesian approaches?
+\end{itemize}
+
+In all cases it would be interesting to investigate how the answers to the above questions varies dependent on temporal and spatial stochasticity, as well as deterministic seasonality.
+
+Another concern would be estimating population density when there is migration of mosquitoes into/out of the study area.
+
+\section{Method of implementation}
+\subsection{Use current IBM infrastructure in \textit{C++}}
+We would need to integrate the following into the existing IBM:
+
+\begin{itemize}
+\item Probabilistic methods for trapping female mosquitoes in feeding sites, and also at random locations. At feeding sites, this could be accomplished by probabilistically selecting females at a given feeding site - this uncertainty reflects that there is in practice some spatial dispersion of females around feeding sites, and that at a given time only a fraction will be resting. We could also go on a travelling salesman tour of the feeding sites, and collect samples from each to emulate the field work that has been done in Burkina. Other non-feeding-site traps could have a distance of attraction (or reduction in jump rate), and probabilistically the mosquitoes are moved into the trap. Males could be sampled in the same way as females at feeding sites, although this method neglects to explicitly address the swarming nature of the males, which has been used as a capture mechanism.
+\item A way to mark mosquitoes individually. This could be accomplished, although it would require splitting the mosquitoes into marked and non-marked through the \textit{structs-approach} that is currently implemented in \textit{C++}. This would no doubt be possible, although it may be quite tricky to keep track of various entities, and ensure that we don't have inadvertent loss or double counting. 
+\item A way to release mosquitoes at points in the domain. This would not be difficult once the previous point has been addressed.
+\end{itemize}
+
+\subsection{Create a new agent-based model in Python}
+Whilst it would be painful to reproduce the model in Python, due to the model complexity, and ensuring consistency with the existing IBM, a number of benefits could be realised. Some of these benefits would be in implementation, whilst others would be in allowing for a more diverse set of behaviours (resting females, swarming males), habitats (houses, rooms in houses) and trapping (animal traps, swarm trapping, indoors vs outdoor trapping). Increasing model complexity to include some of these features is inherently risky, particularly when we lack for data governing mosquito bionomics. However, a model allowing for the flexibility of behaviours, habitats and trapping could be more useful for guiding capture-recapture studies, since these are encountered in the field. If the model is feared over-complex, then there is also the potential to perhaps simplify it in areas which should make little difference to this particular analysis.
+
+An object-orientated approach to the problem would make these adjustments relatively easy to make, as well as keep track of marked/non-marked/male entities. 
+
+\end{document}

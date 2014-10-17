@@ -1,0 +1,25 @@
+from IBM_functions import basic
+
+a_loc = basic.location(2,1)
+b_loc = basic.location(3,1)
+a_house = basic.houseTarget(a_loc)
+a_swarm = basic.swarmTarget(b_loc)
+b_swarm = basic.swarmTarget(a_loc)
+
+a_mosquito = basic.maleMosquito(a_swarm)
+b_mosquito = basic.femaleMosquito(a_house)
+c_mosquito = basic.maleMosquito(a_swarm)
+
+print a_swarm.getMarkedInside()
+a_mosquito.moveInside()
+c_mosquito.moveInside()
+a_swarm.getInsideMosquitoGroup().mark()
+print a_swarm.getMarkedInside()
+
+
+a_mosquito.move(b_swarm)
+print b_swarm.getMarkedOutside()
+
+
+
+
