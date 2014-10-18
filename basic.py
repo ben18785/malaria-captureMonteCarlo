@@ -1,4 +1,5 @@
 import random as random
+import numpy as np
 
 
 class groupMosquitoes:
@@ -123,6 +124,10 @@ class target:
     def getMarkedOutside(self):
         return self.outsideMosquitoes.getMosquitoesMark()
 
+    def getNumberMosquitoes(self):
+        totalMosquitoes = self.insideMosquitoes.getNumberInGroup() + self.outsideMosquitoes.getNumberInGroup()
+        return totalMosquitoes
+
     def getNumberInside(self):
         return self.insideMosquitoes.getNumberInGroup()
 
@@ -230,14 +235,30 @@ class groupTarget:
     def getTargetList(self):
         return self.targetList
 
+    def getLocation(self):
+        l_location = []
+        for item in self.targetList:
+            l_location.append(item.getLocation())
+        return l_location
+
+    def getNumListMosquitoes(self):
+        l_mos = []
+        for targets in self.targetList:
+            l_mos.append(targets.getNumberMosquitoes())
+        return np.array(l_mos)
+
     def addTarget(self,a_target):
         self.targetList.append(a_target)
 
     def removeTarget(self,a_target):
         self.targetList.remove(a_target)
 
+
+
 class area:
     def __init__(self,U,numHouses,numSwarms):
+        self.numHouses = numHouses
+        self.numSwarms = numSwarms
         self.houseGroup = groupTarget()
         self.swarmGroup = groupTarget()
         for i in range(0,numHouses):
@@ -251,11 +272,68 @@ class area:
             loc_a = location(rand_x,rand_y)
             self.swarmGroup.addTarget(swarmTarget(loc_a))
 
+
     def getHouseGroup(self):
         return self.houseGroup
 
     def getSwarmGroup(self):
         return self.swarmGroup
 
+    def getHouseLocations(self):
+        return np.array(self.houseGroup.getLocation())
 
+    def getSwarmLocations(self):
+        return np.array(self.swarmGroup.getLocation())
+
+    def getNumHouses(self):
+        return self.numHouses
+
+    def getNumSwarms(self):
+        return self.numSwarms
+
+    def getNumMales(self):
+        c_maleCount = 0
+        for swarms in self.swarmGroup.getTargetList():
+            c_maleCount += swarms.getNumberMosquitoes()
+
+        return c_maleCount
+
+    def getNumFemales(self):
+        c_femaleCount = 0
+        for houses in self.houseGroup.getTargetList():
+            c_femaleCount += houses.getNumberMosquitoes()
+
+        return c_femaleCount
+
+    def getNumMosquitoes(self):
+        c_total = self.getNumMales()+self.getNumFemales()
+        return c_total
+
+    def getNumMalesInside(self):
+        c_maleInsideCount = 0
+        for swarms in self.swarmGroup.getTargetList():
+            c_maleInsideCount += swarms.getNumberInside()
+
+        return c_maleInsideCount
+
+    def getNumFemalesInside(self):
+        c_femaleInsideCount = 0
+        for houses in self.houseGroup.getTargetList():
+            c_femaleInsideCount += houses.getNumberInside()
+
+        return c_femaleInsideCount
+
+    def getNumMalesOutside(self):
+        c_MalesOutsideCount = self.getNumMales()-self.getNumMalesInside()
+        return c_MalesOutsideCount
+
+    def getNumFemalesOutside(self):
+        c_femalesOutsideCount = self.getNumFemales()-self.getNumFemalesInside()
+        return c_femalesOutsideCount
+
+    def getNumListMales(self):
+        return self.swarmGroup.getNumListMosquitoes()
+
+    def getNumListFemales(self):
+        return self.houseGroup.getNumListMosquitoes()
 
