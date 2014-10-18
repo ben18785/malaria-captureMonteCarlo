@@ -1,4 +1,5 @@
-import numpy as np
+import random as random
+
 
 class groupMosquitoes:
     def __init__(self,a_target):
@@ -222,7 +223,39 @@ class releaseTarget(target):
     def __init__(self,a_location):
         target.__init__(self,a_location,"releasePoint")
 
+class groupTarget:
+    def __init__(self):
+        self.targetList = []
+
+    def getTargetList(self):
+        return self.targetList
+
+    def addTarget(self,a_target):
+        self.targetList.append(a_target)
+
+    def removeTarget(self,a_target):
+        self.targetList.remove(a_target)
+
 class area:
     def __init__(self,U,numHouses,numSwarms):
+        self.houseGroup = groupTarget()
+        self.swarmGroup = groupTarget()
         for i in range(0,numHouses):
-            pass
+            rand_x = U*random.random()
+            rand_y = U*random.random()
+            loc_a = location(rand_x,rand_y)
+            self.houseGroup.addTarget(houseTarget(loc_a))
+        for i in range(0,numSwarms):
+            rand_x = U*random.random()
+            rand_y = U*random.random()
+            loc_a = location(rand_x,rand_y)
+            self.swarmGroup.addTarget(swarmTarget(loc_a))
+
+    def getHouseGroup(self):
+        return self.houseGroup
+
+    def getSwarmGroup(self):
+        return self.swarmGroup
+
+
+
