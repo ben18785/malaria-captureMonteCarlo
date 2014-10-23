@@ -2,46 +2,101 @@ from IBM_functions import basic
 import random as random
 
 # A function which puts male and female mosquitoes at random swarms and houses respectively throughout the domain
-def initialise(a_area,numMaleMosquitoes,pMaleInsideSwarm,numFemaleMosquitoes,pFemaleInsideSwarm):
+def initialise(aArea,numMaleMosquitoes,numFemaleMosquitoes,vPInParameters,vPMoveParameters):
+
+    # Get PIn parameters
+    cPInHeterogeneityIndicator = vPInParameters[0]
+    cPInMaleAll = vPInParameters[1]
+    cPInMaleBetaA = vPInParameters[2]
+    cPInMaleBetaB = vPInParameters[3]
+    cPInFemaleAll = vPInParameters[4]
+    cPInFemaleBetaA = vPInParameters[5]
+    cPInFemaleBetaB = vPInParameters[6]
+
+    # Get the PMove parameters
+    cPMoveHeterogeneityIndicator = vPMoveParameters[0]
+    cPMoveMaleAll = vPMoveParameters[1]
+    cPMoveMaleBetaA = vPMoveParameters[2]
+    cPMoveMaleBetaB = vPMoveParameters[3]
+    cPMoveFemaleAll = vPMoveParameters[4]
+    cPMoveFemaleBetaA = vPMoveParameters[5]
+    cPMoveFemaleBetaB = vPMoveParameters[6]
 
     # First sort males
-    c_numMaleMosquitoes = numMaleMosquitoes
-    c_numSwarms= a_area.getNumSwarms()
-    v_swarmSequence = range(0,c_numSwarms)
-    a_swarmList = a_area.getSwarmGroup().getTargetList()
-    a_maleMosquitoList = []
+    cNumMaleMosquitoes = numMaleMosquitoes
+    cNumSwarms= aArea.getNumSwarms()
+    vSwarmSequence = range(0,cNumSwarms)
+    aSwarmList = aArea.getSwarmGroup().getTargetList()
+    aMaleMosquitoList = []
 
    # Put male mosquitoes in
-    while c_numMaleMosquitoes > 0:
-        c_randSwarm = random.choice(v_swarmSequence)
-        a_maleMosquitoList.append(basic.maleMosquito(a_swarmList[c_randSwarm]))
+    while cNumMaleMosquitoes > 0:
+        cRandSwarm = random.choice(vSwarmSequence)
+        if cPInHeterogeneityIndicator == 0 and cPMoveHeterogeneityIndicator == 0:
+            aPInMale = cPInMaleAll
+            aPMoveMale = cPMoveMaleAll
+        elif cPInHeterogeneityIndicator == 0:
+            aPInMale = cPInMaleAll
+            aPMoveMale = random.betavariate(cPMoveMaleBetaA,cPMoveMaleBetaB)
+        elif cPMoveHeterogeneityIndicator == 0:
+            aPInMale = random.betavariate(cPInMaleBetaA,cPInMaleBetaB)
+            aPMoveMale = cPMoveMaleAll
+        else:
+            aPInMale = random.betavariate(cPInMaleBetaA,cPInMaleBetaB)
+            aPMoveMale = random.betavariate(cPMoveMaleBetaA,cPMoveMaleBetaB)
+
+        aMaleMosquitoList.append(basic.maleMosquito(aSwarmList[cRandSwarm],aPInMale,aPMoveMale))
 
         # Move the mosquito inside in relation to probability
         c_randInsideSwarm = random.random()
-        if c_randInsideSwarm < pMaleInsideSwarm:
-            a_maleMosquitoList[-1].moveInside()
+        if c_randInsideSwarm < aMaleMosquitoList[-1].getPIn():
+            aMaleMosquitoList[-1].moveInside()
 
-        c_numMaleMosquitoes-=1
+        cNumMaleMosquitoes-=1
 
     # Now sort females
-    c_numFemaleMosquitoes = numFemaleMosquitoes
-    c_numHouses = a_area.getNumHouses()
-    v_houseSequence = range(0,c_numHouses)
-    a_houseList = a_area.getHouseGroup().getTargetList()
-    a_femaleMosquitoList = []
+    cNumFemaleMosquitoes = numFemaleMosquitoes
+    cNumHouses = aArea.getNumHouses()
+    vHouseSequence = range(0,cNumHouses)
+    aHouseList = aArea.getHouseGroup().getTargetList()
+    aFemaleMosquitoList = []
 
     # Put female mosquitoes in
-    while c_numFemaleMosquitoes > 0:
-        c_randSwarm = random.choice(v_houseSequence)
-        a_femaleMosquitoList.append(basic.femaleMosquito(a_houseList[c_randSwarm]))
+    while cNumFemaleMosquitoes > 0:
+        cRandHouse = random.choice(vHouseSequence)
+        if cPInHeterogeneityIndicator == 0 and cPMoveHeterogeneityIndicator == 0:
+            aPInFemale = cPInFemaleAll
+            aPMoveFemale = cPMoveFemaleAll
+        elif cPInHeterogeneityIndicator == 0:
+            aPInFemale = cPInFemaleAll
+            aPMoveFemale = random.betavariate(cPMoveFemaleBetaA,cPMoveFemaleBetaB)
+        elif cPMoveHeterogeneityIndicator == 0:
+            aPInFemale = random.betavariate(cPInFemaleBetaA,cPInFemaleBetaB)
+            aPMoveFemale = cPMoveFemaleAll
+        else:
+            aPInFemale = random.betavariate(cPInFemaleBetaA,cPInFemaleBetaB)
+            aPMoveFemale = random.betavariate(cPMoveFemaleBetaA,cPMoveFemaleBetaB)
 
-        # Move the mosquito inside in relation to probability
-        c_randInsideSwarm = random.random()
-        if c_randInsideSwarm < pFemaleInsideSwarm:
-            a_femaleMosquitoList[-1].moveInside()
+        aFemaleMosquitoList.append(basic.femaleMosquito(aHouseList[cRandHouse],aPInFemale,aPMoveFemale))
 
-        c_numFemaleMosquitoes-=1
 
+        # Move the mosquito inside in relation to its probability PIn
+        cRandInsideHouse= random.random()
+        if cRandInsideHouse < aFemaleMosquitoList[-1].getPIn():
+            aFemaleMosquitoList[-1].moveInside()
+
+        cNumFemaleMosquitoes-=1
+
+# A function which allows the mosquitoes to move around probabilistically
+def evolveSystem(aArea):
+
+    # Work with males
+
+
+    # Work with females
+    vFemale = aArea.getFemaleMosquitoList()
+    for females in vFemale:
+        pass
 
 
 

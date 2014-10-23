@@ -33,12 +33,20 @@ class groupMosquitoes:
         self.mosquitoList.remove(a_mosquito)
 
 class mosquito:
-    def __init__(self,a_target,sex):
-        self.target = a_target
-        self.sex = sex
+    def __init__(self,aTarget,asex,aPIn,aPMove):
+        self.target = aTarget
+        self.sex = asex
         self.marked = False
         self.inside = 0
-        a_target.addOutsideMosquito(self)
+        self.PIn = aPIn
+        self.pMove = aPMove
+        aTarget.addOutsideMosquito(self)
+
+    def getPIn(self):
+        return self.PIn
+
+    def getPMove(self):
+        return self.pMove
 
     def getSex(self):
         return self.sex
@@ -90,12 +98,12 @@ class mosquito:
         self.inside = 0
 
 class maleMosquito(mosquito):
-    def __init__(self,a_swarmTarget):
-        mosquito.__init__(self,a_swarmTarget,"male")
+    def __init__(self,a_swarmTarget,aPIn,aPMove):
+        mosquito.__init__(self,a_swarmTarget,"male",aPIn,aPMove)
 
 class femaleMosquito(mosquito):
-    def __init__(self,a_houseTarget):
-        mosquito.__init__(self,a_houseTarget,"female")
+    def __init__(self,a_houseTarget,aPIn,aPMove):
+        mosquito.__init__(self,a_houseTarget,"female",aPIn,aPMove)
 
 class location:
     def __init__(self,x,y):
@@ -139,6 +147,14 @@ class target:
 
     def getOutsideMosquitoGroup(self):
         return self.outsideMosquitoes
+
+    def getMosquitoList(self):
+        vMosquitoList = []
+        vMosquitoList.append(self.getInsideMosquitoGroup().getGroupList())
+        vMosquitoList.append(self.getOutsideMosquitoGroup().getGroupList())
+        vMosquitoList = [item for sublist in vMosquitoList for item in sublist]
+        return vMosquitoList
+
 
     def addInsideMosquitoes(self,a_group):
         c_len = a_group.getNumberInGroup()
@@ -235,6 +251,15 @@ class groupTarget:
     def getTargetList(self):
         return self.targetList
 
+    def getMosquitoList(self):
+        vTargets = self.targetList
+        vMosquitoList = []
+        for targets in vTargets:
+            vMosquitoList.append(targets.getMosquitoList())
+        vMosquitoList = [item for sublist in vMosquitoList for item in sublist]
+        return vMosquitoList
+
+
     def getLocation(self):
         l_location = []
         for item in self.targetList:
@@ -242,18 +267,22 @@ class groupTarget:
         return l_location
 
     def getNumListMosquitoes(self):
-        l_mos = []
+        lMos = []
         for targets in self.targetList:
-            l_mos.append(targets.getNumberMosquitoes())
-        return np.array(l_mos)
+            lMos.append(targets.getNumberMosquitoes())
+        return np.array(lMos)
+
+    def getNumListInsideMosquitoes(self):
+        lMos = []
+        for targets in self.targetList:
+            lMos.append(targets.getNumberInside())
+        return np.array(lMos)
 
     def addTarget(self,a_target):
         self.targetList.append(a_target)
 
     def removeTarget(self,a_target):
         self.targetList.remove(a_target)
-
-
 
 class area:
     def __init__(self,U,numHouses,numSwarms):
@@ -275,6 +304,16 @@ class area:
 
     def getHouseGroup(self):
         return self.houseGroup
+
+    def getFemaleMosquitoList(self):
+        aHouseGroup = self.houseGroup
+        vMosquitoList = aHouseGroup.getMosquitoList()
+        return vMosquitoList
+
+    def getMaleMosquitoList(self):
+        aSwarmGroup = self.swarmGroup
+        vMosquitoList = aSwarmGroup.getMosquitoList()
+        return vMosquitoList
 
     def getSwarmGroup(self):
         return self.swarmGroup
@@ -334,6 +373,11 @@ class area:
     def getNumListMales(self):
         return self.swarmGroup.getNumListMosquitoes()
 
+    def getNumListInsideMales(self):
+        return self.swarmGroup.getNumListInsideMosquitoes()
+
     def getNumListFemales(self):
         return self.houseGroup.getNumListMosquitoes()
 
+    def getNumListInsideFemales(self):
+        return self.houseGroup.getNumListInsideMosquitoes()
