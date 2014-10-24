@@ -16,6 +16,22 @@ class groupMosquitoes:
         c_unmarked = c_len-c_marked
         return [c_marked,c_unmarked]
 
+    def getUnmarkedMosquitoesList(self):
+        cLen = len(self.mosquitoList)
+        vUnmarkedMosquitoList = []
+        for mosquitoes in self.mosquitoList:
+            if not mosquitoes.getMark():
+                vUnmarkedMosquitoList.append(mosquitoes)
+        return vUnmarkedMosquitoList
+
+    def getMarkedMosquitoesList(self):
+        cLen = len(self.mosquitoList)
+        vMarkedMosquitoList = []
+        for mosquitoes in self.mosquitoList:
+            if mosquitoes.getMark():
+                vMarkedMosquitoList.append(mosquitoes)
+        return vMarkedMosquitoList
+
     def getNumberInGroup(self):
         return len(self.mosquitoList)
 
@@ -81,7 +97,8 @@ class mosquito:
             self.target.removeOutsideMosquito(self)
             self.inside = 1
         else:
-            print "Error: have tried to move a mosquito that is not outside to the inside"
+            # Do not need to do anything since mosquito is already inside
+            pass
 
     def moveOutside(self):
         if self.inside == 1:
@@ -89,7 +106,7 @@ class mosquito:
             self.target.removeInsideMosquito(self)
             self.inside = 0
         else:
-            print "Error: have tried to move a mosquito that is not inside to the outside"
+            pass
 
     def labelInside(self):
         self.inside = 1
@@ -113,6 +130,12 @@ class location:
     def getLocation(self):
         return [self.x,self.y]
 
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
 class target:
     def __init__(self,a_location,type):
         self.location = a_location
@@ -125,6 +148,30 @@ class target:
 
     def getLocation(self):
         return self.location.getLocation()
+
+    def getNumMarkedInside(self):
+        return self.getMarkedInside()[0]
+
+    def getMarkedInsideIndicator(self):
+        if self.getNumMarkedInside() > 0:
+            return 1
+        else:
+            return 0
+
+    def getNumMarkedOutside(self):
+        return self.getMarkedOutside()[0]
+
+    def getNumMarkedTotal(self):
+        return self.getNumMarkedInside() + self.getNumMarkedOutside()
+
+    def getNumUnmarkedInside(self):
+        return self.getMarkedInside()[1]
+
+    def getUnmarkedMosquitoInsideList(self):
+        return self.insideMosquitoes.getUnmarkedMosquitoesList()
+
+    def getMarkedMosquitoInsideList(self):
+        return self.insideMosquitoes.getMarkedMosquitoesList()
 
     def getMarkedInside(self):
         return self.insideMosquitoes.getMosquitoesMark()
@@ -251,6 +298,9 @@ class groupTarget:
     def getTargetList(self):
         return self.targetList
 
+    def getNumTarget(self):
+        return len(self.targetList)
+
     def getMosquitoList(self):
         vTargets = self.targetList
         vMosquitoList = []
@@ -272,6 +322,24 @@ class groupTarget:
             lMos.append(targets.getNumberMosquitoes())
         return np.array(lMos)
 
+    def getNumListMarkedInsideMosquitoes(self):
+        lMos = []
+        for targets in self.targetList:
+            lMos.append(targets.getNumMarkedInside())
+        return np.array(lMos)
+
+    def getListMarkedInsideIndicator(self):
+        lMos = []
+        for targets in self.targetList:
+            lMos.append(targets.getMarkedInsideIndicator())
+        return np.array(lMos)
+
+    def getNumListMarkedTotalMosquitoes(self):
+        lMos = []
+        for targets in self.targetList:
+            lMos.append(targets.getNumMarkedTotal())
+        return np.array(lMos)
+
     def getNumListInsideMosquitoes(self):
         lMos = []
         for targets in self.targetList:
@@ -285,25 +353,51 @@ class groupTarget:
         self.targetList.remove(a_target)
 
 class area:
-    def __init__(self,U,numHouses,numSwarms):
-        self.numHouses = numHouses
-        self.numSwarms = numSwarms
+    def __init__(self,U,numHouses,numSwarms,vCovarianceParameters):
+
         self.houseGroup = groupTarget()
         self.swarmGroup = groupTarget()
-        for i in range(0,numHouses):
-            rand_x = U*random.random()
-            rand_y = U*random.random()
-            loc_a = location(rand_x,rand_y)
-            self.houseGroup.addTarget(houseTarget(loc_a))
-        for i in range(0,numSwarms):
-            rand_x = U*random.random()
-            rand_y = U*random.random()
-            loc_a = location(rand_x,rand_y)
-            self.swarmGroup.addTarget(swarmTarget(loc_a))
+        cCovarianceIndicator = vCovarianceParameters[0]
+
+        if cCovarianceIndicator == 0:
+            for i in range(0,numHouses):
+                rand_x = U*random.random()
+                rand_y = U*random.random()
+                loc_a = location(rand_x,rand_y)
+                self.houseGroup.addTarget(houseTarget(loc_a))
+            for i in range(0,numSwarms):
+                rand_x = U*random.random()
+                rand_y = U*random.random()
+                loc_a = location(rand_x,rand_y)
+                self.swarmGroup.addTarget(swarmTarget(loc_a))
+        else:
+            cNumDisturbances = vCovarianceParameters[1]
+            cSwarmsPerDisturbance = vCovarianceParameters[2]
+            cHousesPerDisturbance = vCovarianceParameters[3]
+            aGroupDisturbance = groupDisturbances()
+            for i in range(0,cNumDisturbances):
+                aDisturbance = disturbance(U)
+                for j in range(0,cSwarmsPerDisturbance):
+                    aDisturbance.addSwarm(U,vCovarianceParameters)
+                for j in range(0,cHousesPerDisturbance):
+                    aDisturbance.addHouse(U,vCovarianceParameters)
+                aGroupDisturbance.addDisturbance(aDisturbance)
+            self.swarmGroup = aGroupDisturbance.getGroupSwarms()
+            self.houseGroup = aGroupDisturbance.getGroupHouses()
+
+        self.numHouses = self.houseGroup.getNumTarget()
+        self.numSwarms = self.swarmGroup.getNumTarget()
+
 
 
     def getHouseGroup(self):
         return self.houseGroup
+
+    def getHouseList(self):
+        return self.houseGroup.getTargetList()
+
+    def getSwarmList(self):
+        return self.swarmGroup.getTargetList()
 
     def getFemaleMosquitoList(self):
         aHouseGroup = self.houseGroup
@@ -373,6 +467,32 @@ class area:
     def getNumListMales(self):
         return self.swarmGroup.getNumListMosquitoes()
 
+    def getNumListMarkedInsideMales(self):
+        return self.swarmGroup.getNumListMarkedInsideMosquitoes()
+
+    def getNumListMarkedInsideFemales(self):
+        return self.houseGroup.getNumListMarkedInsideMosquitoes()
+
+    def getNumListMarkedTotalMales(self):
+        return self.swarmGroup.getNumListMarkedTotalMosquitoes()
+
+    def getNumListMarkedTotalFemales(self):
+        return self.houseGroup.getNumListMarkedTotalMosquitoes()
+
+    def getNumMarkedFemalesTotal(self):
+        return sum(self.getNumListMarkedTotalFemales())
+
+    def getNumMarkedMosquitoesTotal(self):
+        return self.getNumListMarkedTotalMales() + self.getNumMarkedFemalesTotal()
+
+    # Returns a vector of indicator variables, where 1 indicates the presence of a marked individual inside that target
+    def getMarkedIndicatorMales(self):
+        return self.swarmGroup.getListMarkedInsideIndicator()
+
+    # Returns a vector of indicator variables, where 1 indicates the presence of a marked individual inside that target
+    def getMarkedIndicatorFemales(self):
+        return self.houseGroup.getListMarkedInsideIndicator()
+
     def getNumListInsideMales(self):
         return self.swarmGroup.getNumListInsideMosquitoes()
 
@@ -381,3 +501,108 @@ class area:
 
     def getNumListInsideFemales(self):
         return self.houseGroup.getNumListInsideMosquitoes()
+
+class disturbance:
+    def __init__(self,aSize):
+        cRandX = aSize*random.random()
+        cRandY = aSize*random.random()
+        self.location = location(cRandX,cRandY)
+        self.houses = []
+        self.swarms = []
+        self.x = self.location.getX()
+        self.y = self.location.getY()
+
+    def addSwarm(self,aSize,vCovarianceParameters):
+        cSigmaKernelSwarms = vCovarianceParameters[4]
+        aXIncrement = random.normalvariate(0,cSigmaKernelSwarms)
+        aYIncrement = random.normalvariate(0,cSigmaKernelSwarms)
+        cRandX = self.x + aXIncrement
+        cRandY = self.y + aYIncrement
+
+        # Make sure not outside box
+        if cRandX > aSize:
+            cRandX = aSize - (cRandX - aSize)
+        elif cRandX < 0:
+            cRandX = -cRandX
+        if cRandY > aSize:
+            cRandY = aSize - (cRandY - aSize)
+        elif cRandY < 0:
+            cRandY = -cRandY
+
+        aLocation = location(cRandX,cRandY)
+        aSwarm = swarmTarget(aLocation)
+        self.swarms.append(aSwarm)
+
+    def addHouse(self,aSize,vCovarianceParameters):
+        cSigmaKernelHouses = vCovarianceParameters[5]
+        aXIncrement = random.normalvariate(0,cSigmaKernelHouses)
+        aYIncrement = random.normalvariate(0,cSigmaKernelHouses)
+        cRandX = self.x + aXIncrement
+        cRandY = self.y + aYIncrement
+
+        # Make sure not outside box
+        if cRandX > aSize:
+            cRandX = aSize - (cRandX - aSize)
+        elif cRandX < 0:
+            cRandX = -cRandX
+        if cRandY > aSize:
+            cRandY = aSize - (cRandY - aSize)
+        elif cRandY < 0:
+            cRandY = -cRandY
+
+        aLocation = location(cRandX,cRandY)
+        aHouse = houseTarget(aLocation)
+        self.houses.append(aHouse)
+
+    def getVSwarms(self):
+        return self.swarms
+
+    def getVHouses(self):
+        return self.houses
+
+    def getSwarmGroup(self):
+        aSwarmGroupTarget = groupTarget()
+        for swarms in self.swarms:
+            aSwarmGroupTarget.addTarget(swarms)
+        return aSwarmGroupTarget
+
+    def getHouseGroup(self):
+        aHouseGroupTarget = groupTarget()
+        for houses in self.houses:
+            aHouseGroupTarget.addTarget(houses)
+        return aHouseGroupTarget
+
+class groupDisturbances:
+    def __init__(self):
+        self.vDisturbances = []
+
+    def addDisturbance(self,aDisturbance):
+        self.vDisturbances.append(aDisturbance)
+
+    def getVSwarms(self):
+        vSwarms = []
+        for disturbances in self.vDisturbances:
+            vSwarms.append(disturbances.getVSwarms())
+        vSwarms = [item for sublist in vSwarms for item in sublist]
+        return vSwarms
+
+    def getVHouses(self):
+        vHouses = []
+        for disturbances in self.vDisturbances:
+            vHouses.append(disturbances.getVHouses())
+        vHouses = [item for sublist in vHouses for item in sublist]
+        return vHouses
+
+    def getGroupSwarms(self):
+        vSwarms = self.getVSwarms()
+        aGroupSwarms = groupTarget()
+        for swarms in vSwarms:
+            aGroupSwarms.addTarget(swarms)
+        return aGroupSwarms
+
+    def getGroupHouses(self):
+        vHouses = self.getVHouses()
+        aGroupHouses = groupTarget()
+        for houses in vHouses:
+            aGroupHouses.addTarget(houses)
+        return aGroupHouses
