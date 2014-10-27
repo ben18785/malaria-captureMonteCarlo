@@ -49,14 +49,18 @@ class groupMosquitoes:
         self.mosquitoList.remove(a_mosquito)
 
 class mosquito:
-    def __init__(self,aTarget,asex,aPIn,aPMove):
+    def __init__(self,aTarget,asex,aPIn,aPMove,aPDie):
         self.target = aTarget
         self.sex = asex
         self.marked = False
         self.inside = 0
         self.PIn = aPIn
         self.pMove = aPMove
+        self.pDie = aPDie
         aTarget.addOutsideMosquito(self)
+
+    def getPDie(self):
+        return self.pDie
 
     def getPIn(self):
         return self.PIn
@@ -114,13 +118,69 @@ class mosquito:
     def labelOutside(self):
         self.inside = 0
 
+    def die(self,aArea,vPInParameters,vPMoveParameters,aPDie):
+        # Remove the mosquito from the target
+        if self.inside == 1:
+            self.target.removeInsideMosquito(self)
+        else:
+            self.target.removeOutsideMosquito(self)
+
+        # Select a random target for the mosquito and create it
+        # Get PIn parameters
+        cPInHeterogeneityIndicator = vPInParameters[0]
+        cPInMaleAll = vPInParameters[1]
+        cPInMaleBetaA = vPInParameters[2]
+        cPInMaleBetaB = vPInParameters[3]
+        cPInFemaleAll = vPInParameters[4]
+        cPInFemaleBetaA = vPInParameters[5]
+        cPInFemaleBetaB = vPInParameters[6]
+
+        # Get the PMove parameters
+        cPMoveHeterogeneityIndicator = vPMoveParameters[0]
+        cPMoveMaleAll = vPMoveParameters[1]
+        cPMoveMaleBetaA = vPMoveParameters[2]
+        cPMoveMaleBetaB = vPMoveParameters[3]
+        cPMoveFemaleAll = vPMoveParameters[4]
+        cPMoveFemaleBetaA = vPMoveParameters[5]
+        cPMoveFemaleBetaB = vPMoveParameters[6]
+
+        if self.getSex()=="male":
+            vTargets = aArea.getSwarmList()
+            if cPInHeterogeneityIndicator == 0:
+                aPIn = cPInMaleAll
+            else:
+                aPIn = random.betavariate(cPInMaleBetaA,cPInMaleBetaB)
+            if cPMoveHeterogeneityIndicator == 0:
+                aPMove = cPMoveMaleAll
+            else:
+                aPMove = random.betavariate(cPMoveMaleBetaA,cPMoveMaleBetaB)
+        else:
+            vTargets = aArea.getHouseList()
+            if cPInHeterogeneityIndicator == 0:
+                aPIn = cPInFemaleAll
+            else:
+                aPIn = random.betavariate(cPInFemaleBetaA,cPInFemaleBetaB)
+            if cPMoveHeterogeneityIndicator == 0:
+                aPMove = cPMoveFemaleAll
+            else:
+                aPMove = random.betavariate(cPMoveFemaleBetaA,cPMoveFemaleBetaB)
+
+        CRandIndex = random.randint(0,len(vTargets)-1)
+        aMosquito = mosquito(vTargets[CRandIndex],self.getSex(),aPIn,aPMove,aPDie)
+
+        # Move new mosquito inside with probability
+        cRandIn = random.random()
+        if cRandIn < aPIn:
+            aMosquito.moveInside()
+
+
 class maleMosquito(mosquito):
-    def __init__(self,a_swarmTarget,aPIn,aPMove):
-        mosquito.__init__(self,a_swarmTarget,"male",aPIn,aPMove)
+    def __init__(self,a_swarmTarget,aPIn,aPMove,aPDie):
+        mosquito.__init__(self,a_swarmTarget,"male",aPIn,aPMove,aPDie)
 
 class femaleMosquito(mosquito):
-    def __init__(self,a_houseTarget,aPIn,aPMove):
-        mosquito.__init__(self,a_houseTarget,"female",aPIn,aPMove)
+    def __init__(self,a_houseTarget,aPIn,aPMove,aPDie):
+        mosquito.__init__(self,a_houseTarget,"female",aPIn,aPMove,aPDie)
 
 class location:
     def __init__(self,x,y):
